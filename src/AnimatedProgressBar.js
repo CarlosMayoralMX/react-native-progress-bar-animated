@@ -18,6 +18,7 @@ class ProgressBar extends React.Component {
     this.widthAnimation = new Animated.Value(0);
     this.backgroundAnimation = new Animated.Value(0);
     this.backgroundInterpolationValue = null;
+    this.useNativeDriver = props.useNativeDriver || false;
   }
 
   componentDidMount() {
@@ -26,10 +27,19 @@ class ProgressBar extends React.Component {
     }
   }
 
-  componentWillReceiveProps(props) {
-    if (props.value !== this.state.progress) {
-      if (props.value >= 0 && props.value <= this.props.maxValue) {
-        this.setState({ progress: props.value }, () => {
+
+  componentDidUpdate(prevProps) {
+     if (this.props.value !== prevProps.value) {
+      this.animateWidth();
+      if (this.props.backgroundColorOnComplete) {
+        if (this.props.value === this.props.maxValue) {
+          this.animateBackground();
+        }
+      }
+    }
+    if (prevProps.value !== this.state.progress) {
+      if (prevProps.value >= 0 && prevProps.value <= this.props.maxValue) {
+        this.setState({ progress: prevProps.value }, () => {
           if (this.state.progress === this.props.maxValue) {
             // Callback after complete the progress
             const callback = this.props.onComplete;
@@ -42,18 +52,6 @@ class ProgressBar extends React.Component {
     }
   }
 
-  componentDidUpdate(prevProps) {
-    if (this.props.value !== prevProps.value) {
-      this.animateWidth();
-
-      if (this.props.backgroundColorOnComplete) {
-        if (this.props.value === this.props.maxValue) {
-          this.animateBackground();
-        }
-      }
-    }
-  }
-
   animateWidth() {
     const toValue = ((this.props.width * this.state.progress) / 100) - this.props.borderWidth * 2;
 
@@ -61,6 +59,7 @@ class ProgressBar extends React.Component {
       easing: Easing[this.props.barEasing],
       toValue: toValue > 0 ? toValue : 0,
       duration: this.props.barAnimationDuration,
+      useNativeDriver: this.useNativeDriver,
     }).start();
   }
 
@@ -68,6 +67,7 @@ class ProgressBar extends React.Component {
     Animated.timing(this.backgroundAnimation, {
       toValue: 1,
       duration: this.props.backgroundAnimationDuration,
+      useNativeDriver: this.useNativeDriver,
     }).start();
   }
 
@@ -133,6 +133,7 @@ ProgressBar.propTypes = {
   borderWidth: PropTypes.number,
   borderColor: PropTypes.string,
   borderRadius: PropTypes.number,
+  underlyingColor: PropTypes.string,
 
   /**
    * Callbacks
@@ -152,6 +153,8 @@ ProgressBar.defaultProps = {
 
   backgroundColor: '#148cF0',
   backgroundColorOnComplete: null,
+  underlyingColor: null,
+  
 
   borderWidth: 1,
   borderColor: '#C8CCCE',
